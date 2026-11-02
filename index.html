@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Scream Challenge - Playlist Rewind</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=DM+Sans:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=DM+Sans:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=DM+Sans:wght@400;500;700&display=swap"></noscript>
 <style>
 :root{--bg:#0a1a1c;--panel:#12292c;--ink:#f1fbf8;--mute:#8fb3ad;--off:#1d3b3f;--g:#38b38b;--b:#54b5dd;--yel:#ffd21f;--grn:#3ddc6a;--red:#ff3b3b;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -65,6 +66,13 @@ summary{cursor:pointer;font-weight:700}
 .ig input{flex:1;min-width:0;background:none;border:0;color:var(--ink);font:500 20px "DM Sans",sans-serif;padding:16px 8px;outline:none}
 .err{color:#ff8a8a;min-height:1.5em;margin:8px 0;font-size:15px}
 /* board */
+dialog{background:var(--panel);color:var(--ink);border:2px solid var(--off);border-radius:16px;padding:22px;width:min(92vw,360px)}
+dialog::backdrop{background:rgba(0,0,0,.65)}
+dialog h3{margin:0 0 14px;font:400 22px/1.2 "Bowlby One",Impact,sans-serif}
+dialog input{width:100%;background:var(--bg);border:2px solid var(--off);border-radius:12px;color:var(--ink);font:500 18px "DM Sans",sans-serif;padding:12px 14px;outline:none}
+dialog input:focus{border-color:var(--g)}
+dialog .acts{justify-content:flex-end}
+#dl{margin-top:4px}
 #board{margin:38px auto 0;scroll-margin-top:84px}
 #board .lrow .un{text-align:left}
 .bwrap{width:min(100%,640px)}
@@ -221,12 +229,21 @@ img{max-width:100%}
         <span id="pinfo"></span>
         <button class="btn ghost" id="next">Next page</button>
       </div>
+      <div class="acts"><button class="btn ghost" id="dl" type="button">Download Excel</button></div>
     </div>
+    <dialog id="pw">
+      <form id="pwf" autocomplete="off">
+        <h3 id="pwm">Password</h3>
+        <input id="pwi" type="password" autocomplete="off" placeholder="Password" aria-label="Password">
+        <p class="err" id="pwe" role="alert"></p>
+        <div class="acts"><button class="btn ghost" type="button" id="pwc">Cancel</button><button class="btn" type="submit" style="padding:10px 28px;min-height:48px;font-size:16px">OK</button></div>
+      </form>
+    </dialog>
     <div class="levels" id="levels"></div>
     <details>
       <summary>Operator panel</summary>
       <div class="op">
-        <label>Sensitivity: <span id="sv">5</span> of 10 (raise it if scores rarely reach 100)
+        <label>Sensitivity: <span id="sv">5</span> of 10 (1 = extremely hard to reach 100, 10 = easy)
           <input type="range" id="sens" min="1" max="10" step="1" value="5">
         </label>
         <dl>
@@ -424,11 +441,70 @@ function avatar(i){
   return avCache[i]='data:image/svg+xml,'+encodeURIComponent(s);
 }
 
-/* ---------- storage ---------- */
-let board=[];
+/* ---------- storage: localStorage (this browser only) ---------- */
+const PASS_HASH='487d656f338caf32442e297b3322304a9515bb84428e0545a8d80fc5a1728c83';
+let board=[],dirty=false;
 try{const r=localStorage.getItem('scream-board-v2');if(r)board=JSON.parse(r)||[];}catch(e){}
 function saveBoard(){try{localStorage.setItem('scream-board-v2',JSON.stringify(board));}catch(e){}}
 const sorted=a=>a.slice().sort((x,y)=>y.s-x.s||x.t-y.t);
+async function addEntry(e){board.push(e);saveBoard();return e;}
+/* ---------- password gate + Excel export ---------- */
+async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+let pwRes=null;
+function askPass(msg){
+  return new Promise(res=>{
+    pwRes=res;$('pwm').textContent=msg||'Password';$('pwi').value='';$('pwe').textContent='';
+    $('pw').showModal();setTimeout(()=>$('pwi').focus(),50);
+  });
+}
+function closePw(v){const r=pwRes;pwRes=null;if($('pw').open)$('pw').close();if(r)r(v);}
+$('pwc').addEventListener('click',()=>closePw(null));
+$('pw').addEventListener('cancel',e=>{e.preventDefault();closePw(null);});
+$('pwf').addEventListener('submit',async e=>{
+  e.preventDefault();const v=$('pwi').value;
+  try{if(await sha(v)===PASS_HASH){closePw(v);return;}$('pwe').textContent='Wrong password.';}
+  catch(x){$('pwe').textContent='Password check needs HTTPS.';}
+});
+const T32=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;T32[n]=c>>>0;}
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=T32[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0;}
+function zipBlob(files){
+  const enc=new TextEncoder(),parts=[],cen=[];let off=0;
+  files.forEach(f=>{
+    const nm=enc.encode(f.n),d=enc.encode(f.d),crc=crc32(d);
+    const lh=new DataView(new ArrayBuffer(30));lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(12,0x21,true);lh.setUint32(14,crc,true);lh.setUint32(18,d.length,true);lh.setUint32(22,d.length,true);lh.setUint16(26,nm.length,true);
+    parts.push(new Uint8Array(lh.buffer),nm,d);
+    const ch=new DataView(new ArrayBuffer(46));ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(14,0x21,true);ch.setUint32(16,crc,true);ch.setUint32(20,d.length,true);ch.setUint32(24,d.length,true);ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
+    cen.push(new Uint8Array(ch.buffer),nm);off+=30+nm.length+d.length;
+  });
+  const cs=cen.reduce((a,b)=>a+b.length,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...cen,new Uint8Array(e.buffer)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function xlsxBlob(rows){
+  const X='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',NS='http://schemas.openxmlformats.org/spreadsheetml/2006/main',RN='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  let sd='<row r="1"><c r="A1" t="inlineStr" s="1"><is><t>Instagram Username</t></is></c><c r="B1" t="inlineStr" s="1"><is><t>Points</t></is></c></row>';
+  rows.forEach((r,i)=>{const n=i+2;sd+='<row r="'+n+'"><c r="A'+n+'" t="inlineStr"><is><t>'+esc(r.u)+'</t></is></c><c r="B'+n+'"><v>'+(+r.s)+'</v></c></row>';});
+  return zipBlob([
+   {n:'[Content_Types].xml',d:X+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+   {n:'_rels/.rels',d:X+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="'+RN+'/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+   {n:'xl/workbook.xml',d:X+'<workbook xmlns="'+NS+'" xmlns:r="'+RN+'"><sheets><sheet name="Leaderboard" sheetId="1" r:id="rId1"/></sheets></workbook>'},
+   {n:'xl/_rels/workbook.xml.rels',d:X+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="'+RN+'/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="'+RN+'/styles" Target="styles.xml"/></Relationships>'},
+   {n:'xl/styles.xml',d:X+'<styleSheet xmlns="'+NS+'"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'},
+   {n:'xl/worksheets/sheet1.xml',d:X+'<worksheet xmlns="'+NS+'"><cols><col min="1" max="1" width="32" customWidth="1"/><col min="2" max="2" width="12" customWidth="1"/></cols><sheetData>'+sd+'</sheetData></worksheet>'}
+  ]);
+}
+$('dl').addEventListener('click',async()=>{
+  if(!(await askPass('Password to download')))return;
+  const b=$('dl');b.disabled=true;
+  try{
+    const all=sorted(board);
+    const a=document.createElement('a');a.href=URL.createObjectURL(xlsxBlob(all));
+    a.download='scream-leaderboard-'+new Date().toISOString().slice(0,10)+'.xlsx';
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  }catch(e){alert('Download failed: '+(e.message||e));}
+  b.disabled=false;
+});
 function pickAvatar(){
   const used=new Set(board.map(e=>e.a)),free=[];
   for(let i=0;i<TOTAL_AV;i++)if(!used.has(i))free.push(i);
@@ -455,7 +531,9 @@ function popNum(){const n=$('num');n.classList.remove('pop');void n.offsetWidth;
 let ctx,an,td,fd,state='idle',t0=0,ambient=-60,sens=5,disp=0,db=-90,vr=0,sc=0;
 let win=[],cal=[],peak=0,finalScore=0,pending=null;
 const ceilDb=()=>-12-(sens-5)*3;
-function toScore(d){const c=ceilDb(),f=Math.min(ambient+8,c-15);return Math.max(0,Math.min(100,(d-f)/(c-f)*100));}
+/* sens 1 = ceiling at 0 dBFS and a steep curve (practically impossible to hit 100); sens 5 = neutral; sens 10 = easy */
+const gam=()=>sens<=5?3-(sens-1)*.5:1-(sens-5)*.08;
+function toScore(d){const c=ceilDb(),f=Math.min(ambient+8,c-15);return 100*Math.pow(Math.max(0,Math.min(1,(d-f)/(c-f))),gam());}
 async function initMic(){
   if(an)return true;
   try{
@@ -543,13 +621,16 @@ function toResult(){
   countUp($('r-pts'),finalScore,800);
   setTimeout(()=>$('ig').focus(),400);
 }
-$('form').addEventListener('submit',e=>{
+$('form').addEventListener('submit',async e=>{
   e.preventDefault();
   if(!pending)return;
   const u=$('ig').value.trim().replace(/^@/,'');
   if(!/^[A-Za-z0-9._]{1,30}$/.test(u)){$('err').textContent='Enter a valid Instagram username (letters, numbers, dots, underscores).';return;}
-  const entry={id:Date.now()+'-'+Math.random().toString(36).slice(2,6),u:u,s:pending.s,a:pending.a,t:Date.now()};
-  pending=null;board.push(entry);saveBoard();openBoard(entry);
+  if(!pending.id){pending.id=Date.now()+'-'+Math.random().toString(36).slice(2,6);pending.t=Date.now();}
+  const entry={id:pending.id,u:u,s:pending.s,a:pending.a,t:pending.t};
+  const sbtn=$('form').querySelector('button');sbtn.disabled=true;$('err').textContent='';
+  try{const ne=await addEntry(entry);pending=null;sbtn.disabled=false;openBoard(ne);}
+  catch(x){sbtn.disabled=false;$('err').textContent='Could not save your score. Press Done again.';}
 });
 
 /* ---------- leaderboard ---------- */
@@ -584,7 +665,7 @@ function updatePager(all){
   $('prev').disabled=busy||page<=0;
   $('next').disabled=busy||page>=total-1;
 }
-function refresh(){page=0;const a=sorted(board);drawPage(a,0,false);updatePager(a);}
+function refresh(keep){if(!keep)page=0;const a=sorted(board);page=Math.min(page,Math.max(0,Math.ceil(a.length/PER)-1));drawPage(a,page,false);updatePager(a);dirty=false;}
 function openBoard(ne){
   state='idle';show('s-start');
   const all=sorted(board);
@@ -611,25 +692,27 @@ function animateInsert(ne,r,all){
     requestAnimationFrame(()=>requestAnimationFrame(()=>{o.style.transition='transform .55s cubic-bezier(.2,.8,.2,1)';o.style.transform='';}));
   });
   countUp(el.querySelector('.pt'),ne.s,900);
-  setTimeout(()=>{busy=false;updatePager(all);},1500);
+  setTimeout(()=>{busy=false;if(dirty)refresh(true);else updatePager(all);},1500);
 }
 $('prev').addEventListener('click',()=>{if(page>0){page--;const a=sorted(board);drawPage(a,page,true);updatePager(a);}});
 $('next').addEventListener('click',()=>{const a=sorted(board);if((page+1)*PER<a.length){page++;drawPage(a,page,true);updatePager(a);}});
 
 /* ---------- operator ---------- */
 $('sens').addEventListener('input',e=>{sens=+e.target.value;$('sv').textContent=sens;});
-$('demo').addEventListener('click',()=>{
-  const names=['luna','rizky','dewi','bagas','nadia','fikri','salsa','dimas','citra','arya','maya','eko'];
-  for(let i=0;i<25;i++){
-    board.push({id:'d'+Date.now()+i,u:names[Math.floor(Math.random()*names.length)]+'_'+Math.floor(Math.random()*99),s:5+Math.floor(Math.random()*95),a:pickAvatar(),t:Date.now()+i});
-  }
-  saveBoard();refresh();$('demo').textContent='Added ('+board.length+' players)';setTimeout(()=>{$('demo').textContent='Add 25 demo players';},1500);
+$('demo').addEventListener('click',async()=>{
+  if(!(await askPass('Password to add demo players')))return;
+  const names=['luna','rizky','dewi','bagas','nadia','fikri','salsa','dimas','citra','arya','maya','eko'],b=$('demo');
+  for(let i=0;i<25;i++)board.push({id:'d'+Date.now()+i,u:names[Math.floor(Math.random()*names.length)]+'_'+Math.floor(Math.random()*99),s:5+Math.floor(Math.random()*95),a:pickAvatar(),t:Date.now()+i});
+  saveBoard();refresh();b.textContent='Added ('+board.length+' players)';
+  setTimeout(()=>{b.textContent='Add 25 demo players';},1500);
 });
 let armed=false;
-$('reset').addEventListener('click',()=>{
+$('reset').addEventListener('click',async()=>{
   const b=$('reset');
   if(!armed){armed=true;b.textContent='Sure? Click again to delete';setTimeout(()=>{armed=false;b.textContent='Reset leaderboard';},3000);return;}
-  board=[];saveBoard();refresh();armed=false;b.textContent='Reset leaderboard';
+  armed=false;b.textContent='Reset leaderboard';
+  if(!(await askPass('Password to reset')))return;
+  board=[];saveBoard();refresh();
 });
 
 

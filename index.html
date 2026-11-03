@@ -86,12 +86,6 @@ summary{cursor:pointer;font-weight:700}
 .tk-h{display:block;font:400 17px/1.2 "Bowlby One",Impact,sans-serif;color:#ff8a8a}
 .tk-p{display:block;margin-top:4px;color:var(--ink);font-size:15px;line-height:1.4;overflow-wrap:anywhere}
 .tk-p b{color:#ff8a8a}
-.tk-lb{display:block;margin-top:10px;color:var(--mute);font-size:13px}
-.tk-sg{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-.tk-sg:empty,.tk-lb[hidden]{display:none}
-.tk-sg button{font:700 14px "DM Sans",sans-serif;color:var(--ink);background:var(--off);border:1.5px solid var(--g);border-radius:999px;padding:7px 12px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;animation:chip .4s both cubic-bezier(.2,.9,.3,1.3)}
-.tk-sg button:hover{background:var(--g);color:#05241b}
-@keyframes chip{from{opacity:0;transform:translateY(8px) scale(.9)}}
 /* board */
 dialog{background:var(--panel);color:var(--ink);border:2px solid var(--off);border-radius:16px;padding:22px;width:min(92vw,360px)}
 dialog::backdrop{background:rgba(0,0,0,.65)}
@@ -308,8 +302,6 @@ img{max-width:100%}
         <div>
           <b class="tk-h">Username already taken</b>
           <span class="tk-p" id="tkp"></span>
-          <span class="tk-lb" id="tklb">Available instead:</span>
-          <div class="tk-sg" id="tksg"></div>
         </div>
       </div>
       <p class="err" id="err" role="alert"></p>
@@ -696,30 +688,16 @@ const normU=t=>t.trim().replace(/^@/,'').toLowerCase();
 function syncBoard(){try{const r=localStorage.getItem('scream-board-v3');if(r){const a=JSON.parse(r);if(Array.isArray(a))board=a;}}catch(e){}}
 const isTaken=k=>board.some(e=>String(e.u).toLowerCase()===k);
 let tkFor='';
-function suggestU(base){
-  const rn=()=>Math.floor(Math.random()*90)+10;
-  const c=[base+'_'+rn(),base+'.official','the.'+base,base+'_'+rn(),base+'.'+rn(),base+'_x'],out=[];
-  for(const x of c){if(x.length<=30&&!isTaken(x.toLowerCase())&&!out.includes(x))out.push(x);if(out.length===3)break;}
-  return out;
-}
 function hideTaken(){
   const box=$('taken');box.hidden=true;box.classList.remove('go');
   $('ig').closest('.ig').classList.remove('bad');tkFor='';$('done').disabled=false;
 }
 function showTaken(u){
-  const box=$('taken'),inp=$('ig'),ig=inp.closest('.ig'),sg=$('tksg'),tp=$('tkp');
+  const box=$('taken'),inp=$('ig'),ig=inp.closest('.ig'),tp=$('tkp');
   tkFor=u.toLowerCase();
   tp.textContent='';
   const b=document.createElement('b');b.textContent='@'+u;
   tp.append(b,' is already on the leaderboard. Pick a different username to submit your score.');
-  sg.textContent='';
-  suggestU(u).forEach((x,i)=>{
-    const c=document.createElement('button');c.type='button';c.textContent='@'+x;
-    c.style.animationDelay=(.55+i*.09)+'s';
-    c.addEventListener('click',()=>{inp.value=x;hideTaken();inp.focus();});
-    sg.appendChild(c);
-  });
-  $('tklb').hidden=!sg.children.length;
   box.hidden=false;box.classList.remove('go');void box.offsetWidth;box.classList.add('go');
   ig.classList.remove('bad');void ig.offsetWidth;ig.classList.add('bad');
   $('done').disabled=true;

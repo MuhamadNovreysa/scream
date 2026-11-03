@@ -11,7 +11,7 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 18px/1.5 "DM Sans",system-ui,sans-serif;overflow-x:hidden}
-.top{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:flex-end;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 22px 14px;background:rgba(10,26,28,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--off)}
+.top{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:flex-start;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 22px 14px;background:rgba(10,26,28,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--off)}
 .logo svg{height:30px;width:auto;display:block}
 .screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:84px 20px 40px}
 .screen.on{display:flex;animation:fade .35s}
@@ -40,7 +40,7 @@ summary{cursor:pointer;font-weight:700}
 .op dt{color:var(--mute)}.op dd{margin:0}
 .op .acts .btn{padding:10px 16px;min-height:44px;font-size:15px}
 /* scream */
-.big{font-family:"Bowlby One",Impact,sans-serif;font-size:clamp(90px,17vh,170px);line-height:1;font-variant-numeric:tabular-nums;margin-bottom:14px;height:1.15em;display:flex;align-items:center;justify-content:center;text-align:center}
+.big{font-family:"Bowlby One",Impact,sans-serif;font-size:clamp(64px,min(17vh,21vw),170px);line-height:1;font-variant-numeric:tabular-nums;margin-bottom:14px;height:1.15em;display:flex;align-items:center;justify-content:center;text-align:center}
 .big.txt{font-size:clamp(40px,8vh,80px);color:var(--yel)}
 .big.pop{animation:pop2 .6s}
 @keyframes pop2{0%{transform:scale(.8)}50%{transform:scale(1.18)}100%{transform:none}}
@@ -65,6 +65,33 @@ summary{cursor:pointer;font-weight:700}
 .ig span{color:var(--mute);font-size:20px}
 .ig input{flex:1;min-width:0;background:none;border:0;color:var(--ink);font:500 20px "DM Sans",sans-serif;padding:16px 8px;outline:none}
 .err{color:#ff8a8a;min-height:1.5em;margin:8px 0;font-size:15px}
+/* username already taken */
+.ig.bad{border-color:var(--red);animation:shake .5s cubic-bezier(.36,.07,.19,.97),redpulse 1.2s .2s 2}
+@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+@keyframes redpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,59,59,0)}50%{box-shadow:0 0 0 5px rgba(255,59,59,.25),0 0 28px rgba(255,59,59,.4)}}
+.taken{position:relative;overflow:hidden;display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:start;text-align:left;margin-top:10px;padding:12px 14px;background:linear-gradient(135deg,rgba(255,59,59,.16),rgba(255,59,59,.06));border:2px solid rgba(255,59,59,.6);border-radius:14px}
+.taken[hidden]{display:none}
+.taken.go{animation:tkIn .55s cubic-bezier(.2,.9,.3,1.25) both}
+@keyframes tkIn{0%{opacity:0;transform:translateY(-14px) scale(.94)}100%{opacity:1;transform:none}}
+.taken::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%);transform:translateX(-120%);pointer-events:none}
+.taken.go::after{animation:sweep 1s .35s both}
+.tk-ic{position:relative;width:44px;height:44px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center}
+.tk-ic::before{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--red);opacity:0}
+.taken.go .tk-ic{animation:tkPop .65s .1s cubic-bezier(.2,.9,.3,1.3) both}
+.taken.go .tk-ic::before{animation:ring 1.1s .3s 2 ease-out}
+@keyframes tkPop{0%{transform:scale(.2) rotate(-40deg)}60%{transform:scale(1.2) rotate(6deg)}100%{transform:none}}
+@keyframes ring{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.9);opacity:0}}
+.taken.go .tk-ic .sh{animation:lockShut .5s .55s both}
+@keyframes lockShut{0%{transform:translateY(-3.5px)}60%{transform:translateY(.8px)}100%{transform:none}}
+.tk-h{display:block;font:400 17px/1.2 "Bowlby One",Impact,sans-serif;color:#ff8a8a}
+.tk-p{display:block;margin-top:4px;color:var(--ink);font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+.tk-p b{color:#ff8a8a}
+.tk-lb{display:block;margin-top:10px;color:var(--mute);font-size:13px}
+.tk-sg{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.tk-sg:empty,.tk-lb[hidden]{display:none}
+.tk-sg button{font:700 14px "DM Sans",sans-serif;color:var(--ink);background:var(--off);border:1.5px solid var(--g);border-radius:999px;padding:7px 12px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;animation:chip .4s both cubic-bezier(.2,.9,.3,1.3)}
+.tk-sg button:hover{background:var(--g);color:#05241b}
+@keyframes chip{from{opacity:0;transform:translateY(8px) scale(.9)}}
 /* board */
 dialog{background:var(--panel);color:var(--ink);border:2px solid var(--off);border-radius:16px;padding:22px;width:min(92vw,360px)}
 dialog::backdrop{background:rgba(0,0,0,.65)}
@@ -243,8 +270,9 @@ img{max-width:100%}
     <details>
       <summary>Operator panel</summary>
       <div class="op">
-        <label>Sensitivity: <span id="sv">5</span> of 10 (1 = extremely hard to reach 100, 10 = easy)
+        <label>Sensitivity: <span id="sv">5</span> of 10 (1 = hardest, 1000 is practically impossible; 10 = easy)
           <input type="range" id="sens" min="1" max="10" step="1" value="5">
+          <small id="sinfo"></small>
         </label>
         <dl>
           <dt>Live volume</dt><dd id="o-db">-</dd>
@@ -275,8 +303,17 @@ img{max-width:100%}
     <p class="lvl" id="r-lvl"></p>
     <form id="form" style="width:100%" autocomplete="off" novalidate>
       <label class="ig"><span>@</span><input id="ig" type="text" maxlength="30" placeholder="instagram_username" autocapitalize="off" spellcheck="false" aria-label="Instagram username"></label>
+      <div class="taken" id="taken" role="alert" aria-live="assertive" hidden>
+        <div class="tk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path class="sh" d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+        <div>
+          <b class="tk-h">Username already taken</b>
+          <span class="tk-p" id="tkp"></span>
+          <span class="tk-lb" id="tklb">Available instead:</span>
+          <div class="tk-sg" id="tksg"></div>
+        </div>
+      </div>
       <p class="err" id="err" role="alert"></p>
-      <button class="btn" type="submit">Done</button>
+      <button class="btn" id="done" type="submit">Done</button>
     </form>
   </div>
 </section>
@@ -287,13 +324,13 @@ img{max-width:100%}
 'use strict';
 /* CS = seconds per character (15 -> 45 s total; set 10 for a 30 s cut) */
 const CS=15,K=CS/15,N=3,TOTAL=CS*N,SPOT=650,X0=965,SP=105,FY=668,CYQ=105,CYX=150;
-const Y='#ffd21f',G='#3ddc6a',R='#ff3b3b',WN=16;
-const LV=[[0,'Whisper'],[15,'Chatting'],[35,'Hyped'],[55,'Screamer'],[75,'Banshee'],[92,'Concert Legend']];
+const Y='#ffd21f',G='#3ddc6a',R='#ff3b3b',WN=16,MAXS=1000;
+const LV=[[0,'Whisper'],[150,'Chatting'],[350,'Hyped'],[550,'Screamer'],[750,'Banshee'],[920,'Concert Legend']];
 const lvn=s=>{let r=LV[0];for(const l of LV)if(s>=l[0])r=l;return r[1]};
 const CH=[
-{n:'MINMIN',w:156,h:270,sc:31,mx:.10,my:.36,ph:.4},
-{n:'MONMON',w:182,h:312,sc:100,mx:.10,my:.30,ph:1.9},
-{n:'MANMAN',w:212,h:318,sc:68,mx:.10,my:.30,ph:3.1}];
+{n:'MINMIN',w:156,h:270,sc:310,mx:.10,my:.36,ph:.4},
+{n:'MONMON',w:182,h:312,sc:1000,mx:.10,my:.30,ph:1.9},
+{n:'MANMAN',w:212,h:318,sc:680,mx:.10,my:.30,ph:3.1}];
 const LGO="<svg class=\"gh\" viewBox=\"0 0 32.4827 36.2724\" aria-hidden=\"true\"><path d=\"M18.6022 8.13486V10.6387C21.7746 11.6457 24.0804 14.6256 24.0804 18.1364C24.0804 22.4721 20.5636 25.9992 16.2418 25.9992C11.92 25.9992 8.40323 22.4721 8.40323 18.1364C8.40323 14.6256 10.709 11.6468 13.8814 10.6387V8.13486C9.36531 9.20711 5.99512 13.2838 5.99512 18.1364C5.99512 23.8033 10.5915 28.4132 16.2418 28.4132C21.8921 28.4132 26.4885 23.8033 26.4885 18.1364C26.4885 13.2838 23.1183 9.20711 18.6022 8.13486Z\"/><path d=\"M32.4827 18.1362C32.4827 16.1597 32.1291 14.2637 31.4834 12.5089C32.3129 11.4728 32.4571 9.98634 31.7335 8.78107C31.0088 7.5723 29.6267 7.00525 28.3215 7.26077C25.9948 4.66356 22.8491 2.8189 19.2963 2.13751C18.8391 0.890241 17.6432 0 16.2414 0C14.8395 0 13.6436 0.890241 13.1864 2.13751C9.6336 2.8189 6.4891 4.66356 4.16126 7.26077C2.85716 7.00525 1.47511 7.57347 0.74919 8.78107C0.0255935 9.98634 0.169847 11.4728 0.999307 12.5089C0.353655 14.2637 0 16.1597 0 18.1362C0 20.1127 0.353655 22.0087 0.999307 23.7635C0.169847 24.7996 0.0255935 26.286 0.74919 27.4913C1.47395 28.7001 2.85599 29.2671 4.16126 29.0116C6.48794 31.6088 9.6336 33.4535 13.1864 34.1349C13.6436 35.3821 14.8395 36.2724 16.2414 36.2724C17.6432 36.2724 18.8391 35.3821 19.2963 34.1349C22.8491 33.4535 25.9936 31.6088 28.3215 29.0116C29.6256 29.2671 31.0076 28.6989 31.7335 27.4913C32.4571 26.286 32.3129 24.7996 31.4834 23.7635C32.1291 22.0087 32.4827 20.1127 32.4827 18.1362ZM19.2114 31.6753C18.703 30.5377 17.5641 29.7443 16.2414 29.7443C14.9186 29.7443 13.7797 30.5377 13.2714 31.6753C10.5247 31.0698 8.08287 29.644 6.21339 27.6663C6.91953 26.6431 7.00795 25.2593 6.32623 24.124C5.64335 22.9864 4.3788 22.417 3.1445 22.5676C2.67451 21.1756 2.41974 19.6845 2.41974 18.1362C2.41974 16.5879 2.67451 15.0968 3.1445 13.7048C4.3788 13.8553 5.64335 13.2859 6.32623 12.1483C7.00795 11.0131 6.91953 9.62931 6.21339 8.60605C8.08287 6.62839 10.5247 5.2026 13.2714 4.59705C13.6157 5.36712 14.2486 5.9785 15.0327 6.29353V13.629C13.0492 14.1634 11.5892 15.9777 11.5892 18.1362C11.5892 20.7136 13.6727 22.8032 16.2425 22.8032C18.8123 22.8032 20.8959 20.7136 20.8959 18.1362C20.8959 15.9788 19.4359 14.1634 17.4524 13.629V6.29353C18.2365 5.9785 18.8693 5.36712 19.2125 4.59705C21.9592 5.2026 24.401 6.62839 26.2705 8.60605C25.5643 9.62931 25.4759 11.0131 26.1577 12.1483C26.8405 13.2859 28.1051 13.8553 29.3394 13.7048C29.8094 15.0968 30.0641 16.5879 30.0641 18.1362C30.0641 19.6845 29.8094 21.1756 29.3394 22.5676C28.1051 22.417 26.8405 22.9864 26.1577 24.124C25.4759 25.2593 25.5643 26.6431 26.2705 27.6663C24.401 29.644 21.9592 31.0698 19.2125 31.6753H19.2114Z\"/></svg><svg class=\"fl\" viewBox=\"0 0 32.4827 36.2724\" aria-hidden=\"true\"><path d=\"M18.6022 8.13486V10.6387C21.7746 11.6457 24.0804 14.6256 24.0804 18.1364C24.0804 22.4721 20.5636 25.9992 16.2418 25.9992C11.92 25.9992 8.40323 22.4721 8.40323 18.1364C8.40323 14.6256 10.709 11.6468 13.8814 10.6387V8.13486C9.36531 9.20711 5.99512 13.2838 5.99512 18.1364C5.99512 23.8033 10.5915 28.4132 16.2418 28.4132C21.8921 28.4132 26.4885 23.8033 26.4885 18.1364C26.4885 13.2838 23.1183 9.20711 18.6022 8.13486Z\" fill=\"#54B5DD\"/><path d=\"M32.4827 18.1362C32.4827 16.1597 32.1291 14.2637 31.4834 12.5089C32.3129 11.4728 32.4571 9.98634 31.7335 8.78107C31.0088 7.5723 29.6267 7.00525 28.3215 7.26077C25.9948 4.66356 22.8491 2.8189 19.2963 2.13751C18.8391 0.890241 17.6432 0 16.2414 0C14.8395 0 13.6436 0.890241 13.1864 2.13751C9.6336 2.8189 6.4891 4.66356 4.16126 7.26077C2.85716 7.00525 1.47511 7.57347 0.74919 8.78107C0.0255935 9.98634 0.169847 11.4728 0.999307 12.5089C0.353655 14.2637 0 16.1597 0 18.1362C0 20.1127 0.353655 22.0087 0.999307 23.7635C0.169847 24.7996 0.0255935 26.286 0.74919 27.4913C1.47395 28.7001 2.85599 29.2671 4.16126 29.0116C6.48794 31.6088 9.6336 33.4535 13.1864 34.1349C13.6436 35.3821 14.8395 36.2724 16.2414 36.2724C17.6432 36.2724 18.8391 35.3821 19.2963 34.1349C22.8491 33.4535 25.9936 31.6088 28.3215 29.0116C29.6256 29.2671 31.0076 28.6989 31.7335 27.4913C32.4571 26.286 32.3129 24.7996 31.4834 23.7635C32.1291 22.0087 32.4827 20.1127 32.4827 18.1362ZM19.2114 31.6753C18.703 30.5377 17.5641 29.7443 16.2414 29.7443C14.9186 29.7443 13.7797 30.5377 13.2714 31.6753C10.5247 31.0698 8.08287 29.644 6.21339 27.6663C6.91953 26.6431 7.00795 25.2593 6.32623 24.124C5.64335 22.9864 4.3788 22.417 3.1445 22.5676C2.67451 21.1756 2.41974 19.6845 2.41974 18.1362C2.41974 16.5879 2.67451 15.0968 3.1445 13.7048C4.3788 13.8553 5.64335 13.2859 6.32623 12.1483C7.00795 11.0131 6.91953 9.62931 6.21339 8.60605C8.08287 6.62839 10.5247 5.2026 13.2714 4.59705C13.6157 5.36712 14.2486 5.9785 15.0327 6.29353V13.629C13.0492 14.1634 11.5892 15.9777 11.5892 18.1362C11.5892 20.7136 13.6727 22.8032 16.2425 22.8032C18.8123 22.8032 20.8959 20.7136 20.8959 18.1362C20.8959 15.9788 19.4359 14.1634 17.4524 13.629V6.29353C18.2365 5.9785 18.8693 5.36712 19.2125 4.59705C21.9592 5.2026 24.401 6.62839 26.2705 8.60605C25.5643 9.62931 25.4759 11.0131 26.1577 12.1483C26.8405 13.2859 28.1051 13.8553 29.3394 13.7048C29.8094 15.0968 30.0641 16.5879 30.0641 18.1362C30.0641 19.6845 29.8094 21.1756 29.3394 22.5676C28.1051 22.417 26.8405 22.9864 26.1577 24.124C25.4759 25.2593 25.5643 26.6431 26.2705 27.6663C24.401 29.644 21.9592 31.0698 19.2125 31.6753H19.2114Z\" fill=\"#38B38B\"/></svg>";
 const cl01=x=>Math.max(0,Math.min(1,x));
 const sm=x=>{x=cl01(x);return x*x*(3-2*x)};
@@ -312,7 +349,7 @@ function posAt(i,t){
  if(u<11.4)return{x:SPOT,y:FY,s:1,z:500,m:u<5?'rdy':u<9.2?'scr':'win',u};
  const p=Math.pow(cl01((u-11.4)/3.6),1.25);
  return{x:SPOT-(SPOT+200)*p,y:FY,s:1,z:500,m:'x',u}}
-function lvlAt(c,tau){if(tau<0)return 0;const T=c.sc/100;
+function lvlAt(c,tau){if(tau<0)return 0;const T=c.sc/MAXS;
  const base=T*(.18+.82*sm(tau/3.1));
  let l;if(tau<3.2)l=base*(1-.22*(.5+.5*Math.sin(tau*10.3+c.ph))*(1-sm((tau-2.4)/.8)));
  else l=T*(1-.07*(.5-.5*Math.sin(tau*13)));
@@ -339,7 +376,7 @@ function mount(root){
   e.innerHTML='<div class="a sh" style="top:'+(c.h-9)+'px"></div><div class="a bd">'
    +'<div class="a spr" style="background-image:url('+g.SCREAM_SPRITES[i]+')"></div>'
    +'<div class="a rgs" style="left:'+(c.mx*c.w)+'px;top:'+(c.my*c.h)+'px"><i></i><i></i><i></i></div></div>'
-   +'<div class="a tag d">#'+(i+1)+' '+c.n+'</div><div class="a bub"><b class="d">'+c.sc+'</b><span class="d">'+lvn(c.sc).toUpperCase()+'</span></div>';
+   +'<div class="a tag d">#'+(i+1)+' '+c.n+'</div><div class="a bub"><b class="d"'+(c.sc>999?' style="font-size:50px"':'')+'>'+c.sc+'</b><span class="d">'+lvn(c.sc).toUpperCase()+'</span></div>';
   chs.appendChild(e);
   c.el=e;c.bd=e.querySelector('.bd');c.spr=e.querySelector('.spr');c.sh=e.querySelector('.sh');c.tag=e.querySelector('.tag');c.bub=e.querySelector('.bub');c.rg=[...e.querySelectorAll('.rgs i')];c.f=-1;
  });
@@ -352,10 +389,10 @@ function mount(root){
   t=Math.max(0,Math.min(TOTAL-.001,t));
   const k=Math.min(N-1,Math.floor(t/CS)),u=(t-k*CS)/K,c0=CH[k];
   let L=0,Lv=0,txt,cp,lv='',col='#f1fbf8',pop=1,fs=62;
-  if(u<3.35){if(k===0){txt='--';cp='READY'}else{const p=CH[k-1];Lv=p.sc/100;txt=p.sc;cp='LAST SCORE';lv=lvn(p.sc);col='#8fb3ad'}}
+  if(u<3.35){if(k===0){txt='--';cp='READY'}else{const p=CH[k-1];Lv=p.sc/MAXS;txt=p.sc;fs=String(p.sc).length>3?46:62;cp='LAST SCORE';lv=lvn(p.sc);col='#8fb3ad'}}
   else if(u<5){const d=u<3.8?'3':u<4.25?'2':u<4.7?'1':'GO!',st=u<3.8?3.35:u<4.25?3.8:u<4.7?4.25:4.7;txt=d;cp='GET READY';pop=1+.6*(1-sm((u-st)/.25))}
   else if(u<9.2){L=lvlAt(c0,u-5);Lv=L;txt='SCREAM!';fs=34;cp='LISTENING';col=Y}
-  else{Lv=c0.sc/100;txt=c0.sc;cp='YOUR SCORE';lv=lvn(c0.sc);col=colN(Math.round(Lv*WN));pop=1+.5*(1-sm((u-9.2)/.45))}
+  else{Lv=c0.sc/MAXS;txt=c0.sc;fs=String(c0.sc).length>3?46:62;cp='YOUR SCORE';lv=lvn(c0.sc);col=colN(Math.round(Lv*WN));pop=1+.5*(1-sm((u-9.2)/.45))}
   setLogo(Lv);
   if(lastTxt!==cp+'|'+txt+'|'+lv){lastTxt=cp+'|'+txt+'|'+lv;cap.textContent=cp;num.textContent=txt;lvl.textContent=lv.toUpperCase()}
   num.style.fontSize=fs+'px';
@@ -390,9 +427,9 @@ function mount(root){
    c.rg.forEach((r,j)=>{if(on){const f=(tau*1.3+j/3)%1;r.style.opacity=((1-f)*.85*Math.min(1,Li*3)).toFixed(3);r.style.transform='scale('+(.25+1.1*f).toFixed(3)+')';r.style.borderColor=colN(rn)}else r.style.opacity=0});
   });
   CH.forEach((c,i)=>{const done=t>=i*CS+9.2*K,r=lbR[i];if(done&&!r.on){r.on=true;r.b.textContent=c.sc}if(!done&&r.on){r.on=false;r.b.textContent='--'}
-   if(done){const a=t-(i*CS+9.2*K);r.b.style.color=colN(Math.round(c.sc/100*WN));r.b.style.transform='scale('+(1+.5*(1-sm(a/.4))).toFixed(3)+')'}else{r.b.style.color='';r.b.style.transform=''}});
+   if(done){const a=t-(i*CS+9.2*K);r.b.style.color=colN(Math.round(c.sc/MAXS*WN));r.b.style.transform='scale('+(1+.5*(1-sm(a/.4))).toFixed(3)+')'}else{r.b.style.color='';r.b.style.transform=''}});
   let f=-1;for(let i=0;i<N;i++)if(t>=i*CS+9.2*K)f=i;
-  const age=f<0?-1:t-(f*CS+9.2*K),cnt=f<0?0:20+Math.round(CH[f].sc*.4);
+  const age=f<0?-1:t-(f*CS+9.2*K),cnt=f<0?0:20+Math.round(CH[f].sc/MAXS*40);
   cfs.forEach((e,j)=>{if(age<0||age>2.6||j>=cnt){e.style.opacity=0;return}const p=cfp[j];
    e.style.background=p.c;e.style.opacity=(1-sm((age-1.8)/.8)).toFixed(3);
    e.style.transform='translate('+(SPOT+Math.cos(p.a)*p.v*age).toFixed(1)+'px,'+(380+Math.sin(p.a)*p.v*age+310*age*age).toFixed(1)+'px) rotate('+(p.r*age).toFixed(0)+'deg)'});
@@ -405,10 +442,10 @@ g.ScreamScene={mount,TOTAL,CS,LGO};
 <script>
 (function(){
 const $=id=>document.getElementById(id);
-const PER=10,N=20,DUR=5000,TOTAL_AV=100;
-const LEVELS=[[0,'Whisper'],[15,'Chatting'],[35,'Hyped'],[55,'Screamer'],[75,'Banshee'],[92,'Concert Legend']];
+const PER=10,N=20,DUR=5000,TOTAL_AV=100,MAXSCORE=1000;
+const LEVELS=[[0,'Whisper'],[150,'Chatting'],[350,'Hyped'],[550,'Screamer'],[750,'Banshee'],[920,'Concert Legend']];
 const lv=s=>{let r=LEVELS[0];for(const l of LEVELS)if(s>=l[0])r=l;return r[1];};
-$('levels').innerHTML=LEVELS.map((l,i)=>'<div><span>'+l[1]+'</span><b>'+l[0]+'-'+(i<LEVELS.length-1?LEVELS[i+1][0]-1:100)+'</b></div>').join('');
+$('levels').innerHTML=LEVELS.map((l,i)=>'<div><span>'+l[1]+'</span><b>'+l[0]+'-'+(i<LEVELS.length-1?LEVELS[i+1][0]-1:MAXSCORE)+'</b></div>').join('');
 
 /* ---------- avatars: 100 generated profile pictures (swap in real photo URLs via CUSTOM) ---------- */
 const CUSTOM=[];
@@ -444,8 +481,8 @@ function avatar(i){
 /* ---------- storage: localStorage (this browser only) ---------- */
 const PASS_HASH='487d656f338caf32442e297b3322304a9515bb84428e0545a8d80fc5a1728c83';
 let board=[],dirty=false;
-try{const r=localStorage.getItem('scream-board-v2');if(r)board=JSON.parse(r)||[];}catch(e){}
-function saveBoard(){try{localStorage.setItem('scream-board-v2',JSON.stringify(board));}catch(e){}}
+try{const r=localStorage.getItem('scream-board-v3');if(r)board=JSON.parse(r)||[];}catch(e){}
+function saveBoard(){try{localStorage.setItem('scream-board-v3',JSON.stringify(board));}catch(e){}}
 const sorted=a=>a.slice().sort((x,y)=>y.s-x.s||x.t-y.t);
 async function addEntry(e){board.push(e);saveBoard();return e;}
 /* ---------- password gate + Excel export ---------- */
@@ -521,19 +558,37 @@ const lg=$('lg');lg.innerHTML=ScreamScene.LGO+'<i class="pk"></i>';
 const lgF=lg.querySelector('.fl'),lgP=lg.querySelector('.pk');
 let lastV=-1;
 function fill(v,pk){
-  const L=Math.max(0,Math.min(1,v/100));
+  const L=Math.max(0,Math.min(1,v/MAXSCORE));
   if(Math.abs(L-lastV)>.001){lastV=L;lgF.style.clipPath='inset('+((1-L)*100).toFixed(2)+'% 0 0 0)';lg.classList.toggle('full',L>=.97);}
-  const show=pk>3&&pk>v+2;lgP.style.opacity=show?.85:0;if(show)lgP.style.bottom=Math.min(100,pk)+'%';
+  const show=pk>30&&pk>v+20;lgP.style.opacity=show?.85:0;if(show)lgP.style.bottom=Math.min(100,pk/MAXSCORE*100)+'%';
 }
 function popNum(){const n=$('num');n.classList.remove('pop');void n.offsetWidth;n.classList.add('pop');}
 
 /* ---------- audio ---------- */
 let ctx,an,td,fd,state='idle',t0=0,ambient=-60,sens=5,disp=0,db=-90,vr=0,sc=0;
 let win=[],cal=[],peak=0,finalScore=0,pending=null;
-const ceilDb=()=>-12-(sens-5)*3;
-/* sens 1 = ceiling at 0 dBFS and a steep curve (practically impossible to hit 100); sens 5 = neutral; sens 10 = easy */
-const gam=()=>sens<=5?3-(sens-1)*.5:1-(sens-5)*.08;
-function toScore(d){const c=ceilDb(),f=Math.min(ambient+8,c-15);return 100*Math.pow(Math.max(0,Math.min(1,(d-f)/(c-f))),gam());}
+/* ---- scoring model (0-1000) ----
+   Calibration: a digital MEMS mic outputs -26 dBFS (peak) for 94 dB SPL and clips at ~120 dB SPL (datasheet AOP).
+   The code measures RMS, and a full-scale sine has -3 dBFS RMS = 120 dB SPL, so dB SPL ~ dBFS(RMS) + 123.
+   That is also the hard ceiling of any browser mic: ~123 dB SPL, barely above the male world record (122.4 dB, Guinness 2026).
+   score = 1000 * ((L - floor) / (C - floor)) ^ g   where L = estimated dB SPL at the mic
+   sens 1  : C = 125 dB SPL (above anything a mic can read) and g = 3.2 -> 1000 is impossible, a record-level scream reaches ~850-900
+   sens 10 : C = 108 dB SPL and g = 1 (linear)  -> easy */
+const SPL_OFFSET=123,WIN_MS=500;
+function cfg(){const k=(sens-1)/9;return{C:125-17*k,g:3.2-2.2*k,cap:sens===1?900:MAXSCORE};}
+function toScore(d){
+  const {C,g,cap}=cfg(),L=d+SPL_OFFSET,amb=ambient+SPL_OFFSET;
+  if(L<amb+6)return 0;                                   /* room noise alone never scores */
+  const f=Math.min(Math.max(amb+8,55),80,C-15);
+  const x=Math.max(0,Math.min(1,(L-f)/(C-f)));
+  return Math.min(cap,MAXSCORE*Math.pow(x,g));
+}
+function sinfo(){
+  const {C,cap}=cfg();
+  $('sinfo').textContent=sens===1
+    ?'Max reachable is about '+cap+'. 1000 would need '+Math.round(C)+' dB SPL at the mic (male world record: 122.4 dB).'
+    :'1000 needs about '+Math.round(C)+' dB SPL at the mic (male world record: 122.4 dB).';
+}
 async function initMic(){
   if(an)return true;
   try{
@@ -553,15 +608,16 @@ async function initMic(){
     return false;
   }
 }
-function sample(){
+function sample(now){
   an.getFloatTimeDomainData(td);
   let s=0;for(let i=0;i<td.length;i++)s+=td[i]*td[i];
-  win.push(s/td.length);if(win.length>8)win.shift();
-  db=10*Math.log10(win.reduce((a,b)=>a+b,0)/win.length+1e-12);
+  /* sustained level: mean power over the last 500 ms, so a tap, pop or breath on the mic cannot score */
+  win.push({t:now,p:s/td.length});while(win.length&&now-win[0].t>WIN_MS)win.shift();
+  db=10*Math.log10(win.reduce((a,b)=>a+b.p,0)/win.length+1e-12);
   an.getFloatFrequencyData(fd);
   const hz=ctx.sampleRate/an.fftSize;let v=0,t=0;
   for(let i=1;i<fd.length;i++){const f=i*hz;if(f<80||f>8000)continue;const p=Math.pow(10,fd[i]/10);t+=p;if(f>=300&&f<=4000)v+=p;}
-  vr=t?v/t:0;
+  vr=vr*.8+(t?v/t:0)*.2;
   sc=toScore(db)*Math.max(.6,Math.min(1,.6+.4*(vr/.5)));
 }
 
@@ -569,7 +625,7 @@ function sample(){
 function frame(now){
   requestAnimationFrame(frame);
   if(!an)return;
-  sample();
+  sample(now);
   const el=now-t0;let tgt=0,num='-';
   if(state==='calibrating'){
     cal.push(db);
@@ -592,8 +648,8 @@ function frame(now){
     fill(state==='recording'?disp:state==='hold'?finalScore:0,state==='recording'?peak:state==='hold'?finalScore:0);
   }
   if(cur==='s-start'){
-    $('o-db').textContent=db.toFixed(1)+' dBFS';
-    $('o-amb').textContent=ambient.toFixed(1)+' dBFS';
+    $('o-db').textContent=db.toFixed(1)+' dBFS (~'+(db+SPL_OFFSET).toFixed(0)+' dB SPL)';
+    $('o-amb').textContent=ambient.toFixed(1)+' dBFS (~'+(ambient+SPL_OFFSET).toFixed(0)+' dB SPL)';
     $('o-vr').textContent=(vr*100).toFixed(0)+'%';
     $('o-raw').textContent=sc.toFixed(0);
   }
@@ -616,7 +672,7 @@ function toResult(){
   pending={a:pickAvatar(),s:finalScore};
   $('r-av').src=avatar(pending.a);
   $('r-lvl').textContent=lv(finalScore);
-  $('ig').value='';$('err').textContent='';
+  syncBoard();$('ig').value='';$('err').textContent='';hideTaken();
   show('s-result');
   countUp($('r-pts'),finalScore,800);
   setTimeout(()=>$('ig').focus(),400);
@@ -626,11 +682,53 @@ $('form').addEventListener('submit',async e=>{
   if(!pending)return;
   const u=$('ig').value.trim().replace(/^@/,'');
   if(!/^[A-Za-z0-9._]{1,30}$/.test(u)){$('err').textContent='Enter a valid Instagram username (letters, numbers, dots, underscores).';return;}
+  syncBoard();
+  if(isTaken(u.toLowerCase())){showTaken(u);$('ig').focus();return;}
   if(!pending.id){pending.id=Date.now()+'-'+Math.random().toString(36).slice(2,6);pending.t=Date.now();}
   const entry={id:pending.id,u:u,s:pending.s,a:pending.a,t:pending.t};
-  const sbtn=$('form').querySelector('button');sbtn.disabled=true;$('err').textContent='';
+  const sbtn=$('done');sbtn.disabled=true;$('err').textContent='';
   try{const ne=await addEntry(entry);pending=null;sbtn.disabled=false;openBoard(ne);}
   catch(x){sbtn.disabled=false;$('err').textContent='Could not save your score. Press Done again.';}
+});
+
+/* ---------- duplicate username guard ---------- */
+const normU=t=>t.trim().replace(/^@/,'').toLowerCase();
+function syncBoard(){try{const r=localStorage.getItem('scream-board-v3');if(r){const a=JSON.parse(r);if(Array.isArray(a))board=a;}}catch(e){}}
+const isTaken=k=>board.some(e=>String(e.u).toLowerCase()===k);
+let tkFor='';
+function suggestU(base){
+  const rn=()=>Math.floor(Math.random()*90)+10;
+  const c=[base+'_'+rn(),base+'.official','the.'+base,base+'_'+rn(),base+'.'+rn(),base+'_x'],out=[];
+  for(const x of c){if(x.length<=30&&!isTaken(x.toLowerCase())&&!out.includes(x))out.push(x);if(out.length===3)break;}
+  return out;
+}
+function hideTaken(){
+  const box=$('taken');box.hidden=true;box.classList.remove('go');
+  $('ig').closest('.ig').classList.remove('bad');tkFor='';$('done').disabled=false;
+}
+function showTaken(u){
+  const box=$('taken'),inp=$('ig'),ig=inp.closest('.ig'),sg=$('tksg'),tp=$('tkp');
+  tkFor=u.toLowerCase();
+  tp.textContent='';
+  const b=document.createElement('b');b.textContent='@'+u;
+  tp.append(b,' is already on the leaderboard. Pick a different username to submit your score.');
+  sg.textContent='';
+  suggestU(u).forEach((x,i)=>{
+    const c=document.createElement('button');c.type='button';c.textContent='@'+x;
+    c.style.animationDelay=(.55+i*.09)+'s';
+    c.addEventListener('click',()=>{inp.value=x;hideTaken();inp.focus();});
+    sg.appendChild(c);
+  });
+  $('tklb').hidden=!sg.children.length;
+  box.hidden=false;box.classList.remove('go');void box.offsetWidth;box.classList.add('go');
+  ig.classList.remove('bad');void ig.offsetWidth;ig.classList.add('bad');
+  $('done').disabled=true;
+}
+$('ig').addEventListener('input',()=>{
+  $('err').textContent='';
+  const k=normU($('ig').value);
+  if(k&&/^[a-z0-9._]{1,30}$/.test(k)&&isTaken(k)){if(tkFor!==k)showTaken($('ig').value.trim().replace(/^@/,''));}
+  else if(tkFor||$('done').disabled)hideTaken();
 });
 
 /* ---------- leaderboard ---------- */
@@ -698,11 +796,12 @@ $('prev').addEventListener('click',()=>{if(page>0){page--;const a=sorted(board);
 $('next').addEventListener('click',()=>{const a=sorted(board);if((page+1)*PER<a.length){page++;drawPage(a,page,true);updatePager(a);}});
 
 /* ---------- operator ---------- */
-$('sens').addEventListener('input',e=>{sens=+e.target.value;$('sv').textContent=sens;});
+$('sens').addEventListener('input',e=>{sens=+e.target.value;$('sv').textContent=sens;sinfo();});
+sinfo();
 $('demo').addEventListener('click',async()=>{
   if(!(await askPass('Password to add demo players')))return;
   const names=['luna','rizky','dewi','bagas','nadia','fikri','salsa','dimas','citra','arya','maya','eko'],b=$('demo');
-  for(let i=0;i<25;i++)board.push({id:'d'+Date.now()+i,u:names[Math.floor(Math.random()*names.length)]+'_'+Math.floor(Math.random()*99),s:5+Math.floor(Math.random()*95),a:pickAvatar(),t:Date.now()+i});
+  for(let i=0;i<25;i++)board.push({id:'d'+Date.now()+i,u:names[Math.floor(Math.random()*names.length)]+'_'+Math.floor(Math.random()*99),s:Math.round(50+Math.pow(Math.random(),1.3)*850),a:pickAvatar(),t:Date.now()+i});
   saveBoard();refresh();b.textContent='Added ('+board.length+' players)';
   setTimeout(()=>{b.textContent='Add 25 demo players';},1500);
 });

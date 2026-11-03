@@ -194,6 +194,23 @@ img{max-width:100%}
  .bigav{width:96px;height:96px}
 }
 @media (max-width:340px){.levels{grid-template-columns:1fr}}
+/* merchandise (operator + scream screen) */
+:root{--mw:clamp(96px,26vw,190px)}
+#mgd{margin-top:14px}
+.mgh{margin:0;color:var(--mute);font-size:14px;line-height:1.45}
+.mg{display:grid;grid-template-columns:110px 1fr;gap:8px 10px;align-items:center}
+.mg b{color:var(--mute);font-weight:500;font-size:13px}
+.mg input{width:100%;min-width:0;background:var(--bg);border:2px solid var(--off);border-radius:12px;color:var(--ink);font:500 16px "DM Sans",sans-serif;padding:10px 12px;outline:none}
+.mg input:focus{border-color:var(--g)}
+#s-scream .lgo.xl.hasm{margin-right:var(--mw);height:min(50vh,430px,calc((100vw - 40px - var(--mw))/.8955))}
+.mer{position:absolute;left:100%;top:0;bottom:0;width:var(--mw);pointer-events:none}
+.mer .ln{fill:none;stroke:rgba(255,255,255,.4);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .3s,filter .3s}
+.mer .dt{fill:rgba(255,255,255,.55);transition:fill .3s}
+.mer .mi.hit .ln{stroke:var(--yel);filter:drop-shadow(0 0 5px rgba(255,210,31,.7))}
+.mer .mi.hit .dt{fill:var(--yel)}
+.mer .ml{position:absolute;left:34px;right:0;transform:translateY(-50%);white-space:normal;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:700 clamp(13px,1.2vw + 9px,20px)/1.3 "DM Sans",sans-serif;color:rgba(255,255,255,.6);transition:color .3s,transform .35s cubic-bezier(.2,.9,.3,1.4)}
+.mer .ml.hit{color:var(--yel);transform:translateY(-50%) scale(1.1);transform-origin:left center;text-shadow:0 0 12px rgba(255,210,31,.55)}
+@media (max-height:520px) and (orientation:landscape){#s-scream .lgo.xl.hasm{height:min(64vh,280px)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -278,6 +295,15 @@ img{max-width:100%}
           <button class="btn ghost" id="demo" type="button">Add 25 demo players</button>
           <button class="btn ghost" id="reset" type="button">Reset leaderboard</button>
         </div>
+      </div>
+    </details>
+    <details id="mgd">
+      <summary>Operator merchandise</summary>
+      <div class="op">
+        <p class="mgh">Set up to 5 levels (Score + Prize = 10 fields). On the scream screen each prize is connected by a line from the logo to its score. Change a prize anytime and press Save: the scream screen updates right away. Leave a row empty to hide it.</p>
+        <div class="mg" id="mg"></div>
+        <p class="err" id="mge" role="alert"></p>
+        <div class="acts"><button class="btn ghost" id="mgsave" type="button">Save merchandise</button></div>
       </div>
     </details>
   </div>
@@ -550,10 +576,87 @@ const lg=$('lg');lg.innerHTML=ScreamScene.LGO+'<i class="pk"></i>';
 const lgF=lg.querySelector('.fl'),lgP=lg.querySelector('.pk');
 let lastV=-1;
 function fill(v,pk){
+  updMerch(v);
   const L=Math.max(0,Math.min(1,v/MAXSCORE));
   if(Math.abs(L-lastV)>.001){lastV=L;lgF.style.clipPath='inset('+((1-L)*100).toFixed(2)+'% 0 0 0)';lg.classList.toggle('full',L>=.97);}
   const show=pk>30&&pk>v+20;lgP.style.opacity=show?.85:0;if(show)lgP.style.bottom=Math.min(100,pk/MAXSCORE*100)+'%';
 }
+/* ---------- merchandise: operator form + prize lines on the scream screen ---------- */
+const MKEY='scream-merch-v1',MROWS=5,GH_W=32.4827,GH_H=36.2724;
+const MDEF=[[300,'Sticker'],[500,'Keychain'],[700,'Pin'],[850,'T-Shirt'],[950,'Tote Bag']];
+function loadMerch(){
+  try{const r=localStorage.getItem(MKEY);if(r){const a=JSON.parse(r);if(Array.isArray(a))
+    return a.filter(x=>x&&x.s>0&&x.s<=MAXSCORE&&String(x.p||'').trim()).map(x=>({s:Math.round(x.s),p:String(x.p).trim().slice(0,30)})).sort((x,y)=>x.s-y.s).slice(0,MROWS);}}catch(e){}
+  return MDEF.map(x=>({s:x[0],p:x[1]}));
+}
+let merch=loadMerch(),merchEls=[],merchV=0;
+const mer=document.createElement('div');mer.className='mer';mer.setAttribute('aria-hidden','true');lg.appendChild(mer);
+function updMerch(v){merchV=v;merchEls.forEach(m=>{const h=v>=m.s;if(h!==m.h){m.h=h;m.g.classList.toggle('hit',h);m.l.classList.toggle('hit',h);}});}
+function edgeAt(yu){
+  const ps=lg.querySelectorAll('.gh path');
+  for(let d=0;d<=3;d+=.4){
+    for(const yy of (d?[yu-d,yu+d]:[yu])){
+      if(yy<0||yy>GH_H)continue;
+      for(let x=GH_W;x>=0;x-=.25)for(const p of ps){try{if(p.isPointInFill(new DOMPoint(x,yy)))return x;}catch(e){return GH_W;}}
+    }
+  }
+  return GH_W;
+}
+function layoutMerch(){
+  mer.textContent='';merchEls=[];
+  lg.classList.toggle('hasm',merch.length>0);
+  const H=lg.clientHeight,W=lg.clientWidth,MW=mer.clientWidth;
+  if(!H||!W||!MW||!merch.length)return;
+  const NS='http://www.w3.org/2000/svg',svg=document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox','0 0 '+MW+' '+H);
+  const it=merch.map(m=>({m,y:(1-m.s/MAXSCORE)*H})).sort((a,b)=>a.y-b.y);
+  const GAP=Math.min(30,Math.max(22,H/12)),top=12,bot=H-12;
+  it.forEach((o,i)=>{o.l=Math.max(top,i?it[i-1].l+GAP:top,o.y);});
+  if(it.length&&it[it.length-1].l>bot){it[it.length-1].l=bot;for(let i=it.length-2;i>=0;i--)it[i].l=Math.min(it[i].l,it[i+1].l-GAP);}
+  it.forEach(o=>{
+    const x0=edgeAt(o.y/H*GH_H)/GH_W*W-W+1,y=Math.max(2,Math.min(H-2,o.y));
+    const g=document.createElementNS(NS,'g');g.setAttribute('class','mi');
+    const ln=document.createElementNS(NS,'path');ln.setAttribute('class','ln');
+    ln.setAttribute('d','M'+x0.toFixed(1)+','+y.toFixed(1)+' H6 L22,'+o.l.toFixed(1)+' H29');
+    const dt=document.createElementNS(NS,'circle');dt.setAttribute('class','dt');dt.setAttribute('r','3.5');dt.setAttribute('cx',x0.toFixed(1));dt.setAttribute('cy',y.toFixed(1));
+    g.append(ln,dt);svg.appendChild(g);
+    const l=document.createElement('div');l.className='ml';l.textContent=o.m.p;l.style.top=o.l.toFixed(1)+'px';mer.appendChild(l);
+    merchEls.push({s:o.m.s,g,l,h:false});
+  });
+  mer.insertBefore(svg,mer.firstChild);
+  updMerch(merchV);
+}
+if(window.ResizeObserver)new ResizeObserver(()=>requestAnimationFrame(layoutMerch)).observe(lg);else window.addEventListener('resize',layoutMerch);
+function buildMerchForm(){
+  const f=$('mg');f.textContent='';
+  const h1=document.createElement('b'),h2=document.createElement('b');h1.textContent='Score';h2.textContent='Prize';f.append(h1,h2);
+  for(let i=0;i<MROWS;i++){
+    const a=document.createElement('input'),b=document.createElement('input'),m=merch[i];
+    a.type='number';a.min='1';a.max=String(MAXSCORE);a.step='1';a.inputMode='numeric';a.placeholder='e.g. 300';a.setAttribute('aria-label','Level '+(i+1)+' score');a.value=m?m.s:'';
+    b.type='text';b.maxLength=30;b.placeholder='e.g. Sticker';b.setAttribute('aria-label','Level '+(i+1)+' prize');b.autocomplete='off';b.value=m?m.p:'';
+    f.append(a,b);
+  }
+}
+function mgMsg(t,ok){const e=$('mge');e.textContent=t;e.style.color=ok?'var(--g)':'';}
+$('mgsave').addEventListener('click',async()=>{
+  const ins=$('mg').querySelectorAll('input'),rows=[];
+  for(let i=0;i<MROWS;i++){
+    const sv=ins[i*2].value.trim(),pv=ins[i*2+1].value.trim();
+    if(!sv&&!pv)continue;
+    const n=Number(sv);
+    if(!sv||!pv){mgMsg('Level '+(i+1)+': fill in both the score and the prize.');return;}
+    if(!Number.isInteger(n)||n<1||n>MAXSCORE){mgMsg('Level '+(i+1)+': score must be a whole number from 1 to '+MAXSCORE+'.');return;}
+    rows.push({s:n,p:pv.slice(0,30)});
+  }
+  mgMsg('');
+  if(!(await askPass('Password to save merchandise')))return;
+  rows.sort((x,y)=>x.s-y.s);
+  try{localStorage.setItem(MKEY,JSON.stringify(rows));}catch(e){mgMsg('Could not save. Browser storage is unavailable.');return;}
+  merch=rows;buildMerchForm();layoutMerch();
+  mgMsg('Saved. The scream screen now shows these prizes.',true);
+});
+window.addEventListener('storage',e=>{if(e.key===MKEY){merch=loadMerch();buildMerchForm();layoutMerch();}});
+buildMerchForm();
 function popNum(){const n=$('num');n.classList.remove('pop');void n.offsetWidth;n.classList.add('pop');}
 
 /* ---------- audio ---------- */
